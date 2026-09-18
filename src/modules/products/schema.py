@@ -24,3 +24,16 @@ class ProductRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ProductUpdate(BaseModel):
+    name: str | None = None
+    image: str | None = None
+    description: str | None = None
+    category: str | None = None
+    price: float | None = Field(default=None, gt=0)
+    restaurant_id: int | None = None
+    ingredients: list[str] | None = None
+
+
+class ProductAvailabilityUpdate(BaseModel):
+    is_available: bool
