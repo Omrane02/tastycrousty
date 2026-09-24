@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from src.db.seed import seed_data
 from src.modules.health.router import router as health_router
 from src.db.migration import run_migration
 
