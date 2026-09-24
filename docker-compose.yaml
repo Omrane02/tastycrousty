@@ -16,6 +16,7 @@ services:
       - db
     environment:
       DATABASE_URL: postgresql+psycopg://ytasty:ytasty@db:5432/ytasty
+      SECRET_KEY: 7738c9f64c76eb1cfb69e3f74e09e13cf5c9693820f63c8f5d2dadda2a4c12cc
     ports:
       - "8000:8000"
     volumes:
