@@ -7,6 +7,7 @@ from src.modules.auth.router import router as auth_router
 from src.modules.users.router import router as users_router
 from src.modules.restaurants.router import router as restaurants_router
 from src.modules.products.router import router as products_router
+from src.modules.orders.router import router as orders_router
 
 app = FastAPI(title="Ytasty Crousty API", version="0.1.0")
 
@@ -19,3 +20,4 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(restaurants_router)
 app.include_router(products_router)
+app.include_router(orders_router)
