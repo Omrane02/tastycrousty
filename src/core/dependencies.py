@@ -27,3 +27,13 @@ def require_admin( current_user: dict = Depends(get_current_user)) -> dict:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Reserve a l'admin",)
     return current_user
+
+def check_restaurant_access(current_user: dict, restaurant_id: int) -> None:
+    if current_user["role"] == "admin":
+        return
+    if current_user["role"] == "staff" and current_user["restaurant_id"] == restaurant_id:
+        return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Non autorisé a agir sur ce restaurant",
+    )
