@@ -37,3 +37,13 @@ def check_restaurant_access(current_user: dict, restaurant_id: int) -> None:
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Non autorisé a agir sur ce restaurant",
     )
+
+def check_order_restaurant_access(current_user: dict, restaurant_id: int) -> None:
+    if current_user["role"] in ("admin", "direction"):
+        return
+    if current_user["role"] == "staff" and current_user["restaurant_id"] == restaurant_id:
+        return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Vous n'êtes pas autorisé à agir sur les commandes de ce restaurant",
+    )
