@@ -4,23 +4,28 @@ import jwt
 
 from src.core.security import decode_access_token
 
-security_scheme = HTTPBearer()
+security_scheme = HTTPBearer(auto_error=False)
 
 def get_current_user(
-        credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
-        ) -> dict:
-            try:
-                payload = decode_access_token(credentials.credentials)
-            except jwt.PyJWTError:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Token is invalid",
-                )
-            return {
-            "username": payload.get("sub"),
-            "role": payload.get("role"),
-            "restaurant_id": payload.get("restaurant_id"),
-        }
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_scheme),
+) -> dict:
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Non authentifié",
+        )
+    try:
+        payload = decode_access_token(credentials.credentials)
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token is invalid",
+        )
+    return {
+        "username": payload.get("sub"),
+        "role": payload.get("role"),
+        "restaurant_id": payload.get("restaurant_id"),
+    }
 def require_admin( current_user: dict = Depends(get_current_user)) -> dict:
     if current_user["role"] != "admin":
         raise HTTPException(
