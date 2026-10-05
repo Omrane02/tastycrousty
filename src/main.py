@@ -8,7 +8,7 @@ from src.modules.users.router import router as users_router
 from src.modules.restaurants.router import router as restaurants_router
 from src.modules.products.router import router as products_router
 from src.modules.orders.router import router as orders_router
-
+from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(title="Ytasty Crousty API", version="0.1.0")
 
 run_migration()
@@ -21,3 +21,9 @@ app.include_router(users_router)
 app.include_router(restaurants_router)
 app.include_router(products_router)
 app.include_router(orders_router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
