@@ -1,19 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter,BackgroundTasks, Depends, HTTPException, status
 
 from src.core.dependencies import check_order_restaurant_access, get_current_user
 from src.modules.orders import service
 from src.modules.orders.schema import OrderCreate, OrderRead, OrderStatusUpdate
+from src.core.realtime import emit_order_event
 
 router = APIRouter(tags=["orders"])
 
 
 @router.post("/orders", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
-def create_order(data: OrderCreate) -> OrderRead:
+def create_order(data: OrderCreate, background_tasks: BackgroundTasks) -> OrderRead:
     try:
         order = service.create_order(data)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    return OrderRead(**order)
+    result = OrderRead(**order)
+    background_tasks.add_task(
+        emit_order_event, "order:new", result.restaurant_id, result.order_number, result.status
+    )
+    return result
 
 
 @router.get("/orders/{order_number}", response_model=OrderRead)
@@ -39,6 +44,7 @@ def list_restaurant_orders(
 def update_order_status(
     order_number: int,
     data: OrderStatusUpdate,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ) -> OrderRead:
     existing = service.get_order(order_number)
@@ -47,13 +53,21 @@ def update_order_status(
 
     check_order_restaurant_access(current_user, existing["restaurant_id"])
 
-    order = service.update_status(order_number, data.status)
-    return OrderRead(**order)
+    try:
+        order = service.update_status(order_number, data.status)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    result = OrderRead(**order)
+    background_tasks.add_task(
+        emit_order_event, "order:updated", result.restaurant_id, result.order_number, result.status
+    )
+    return result
 
 
 @router.post("/orders/{order_number}/cancel", response_model=OrderRead)
 def cancel_order(
     order_number: int,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ) -> OrderRead:
     existing = service.get_order(order_number)
@@ -62,5 +76,12 @@ def cancel_order(
 
     check_order_restaurant_access(current_user, existing["restaurant_id"])
 
-    order = service.cancel_order(order_number)
-    return OrderRead(**order)
+    try:
+        order = service.cancel_order(order_number)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    result = OrderRead(**order)
+    background_tasks.add_task(
+        emit_order_event, "order:updated", result.restaurant_id, result.order_number, result.status
+    )
+    return result
